@@ -13,6 +13,7 @@ import com.example.praktikum5_navigationcompose_245150200111040.ui.detail.Detail
 @Composable
 fun DetailScreen(
     uiState: DetailUiState,
+    onToggleFavorite: () -> Unit,
     onBack: () -> Unit
 ) {
     Column(
@@ -83,7 +84,23 @@ fun DetailScreen(
                 Text("University: ${student.university}")
 
                 Spacer(modifier = Modifier.height(8.dp))
-                Button(onClick = onBack) {
+                Button(
+                    onClick = onToggleFavorite,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        if (uiState.isFavorite)
+                            "Hapus dari Favorit"
+                        else
+                            "Simpan ke Favorit"
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onBack,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     Text("Kembali")
                 }
             }

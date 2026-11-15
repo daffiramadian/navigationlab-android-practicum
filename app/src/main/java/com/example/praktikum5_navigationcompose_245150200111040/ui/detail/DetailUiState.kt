@@ -6,5 +6,6 @@ data class DetailUiState(
     val student: Student? = null,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val requestedId: Int? = null
+    val requestedId: Int? = null,
+    val isFavorite: Boolean = false
 )

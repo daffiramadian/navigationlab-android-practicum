@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -11,9 +12,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import android.content.Context
+import com.example.praktikum5_navigationcompose_245150200111040.data.local.DatabaseProvider
+import com.example.praktikum5_navigationcompose_245150200111040.data.preferences.UserPreferencesRepository
 import com.example.praktikum5_navigationcompose_245150200111040.data.remote.RetrofitClient
 import com.example.praktikum5_navigationcompose_245150200111040.data.remote.StudentRemoteDataSource
 import com.example.praktikum5_navigationcompose_245150200111040.data.repository.DefaultStudentRepository
+import com.example.praktikum5_navigationcompose_245150200111040.data.repository.FavoriteRepository
 import com.example.praktikum5_navigationcompose_245150200111040.ui.detail.DetailViewModel
 import com.example.praktikum5_navigationcompose_245150200111040.ui.home.HomeViewModel
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.AboutScreen
@@ -30,6 +35,16 @@ fun NavigationLabApp() {
         DefaultStudentRepository(remoteDataSource)
     }
 
+    val context = LocalContext.current
+    val preferencesRepository = remember {
+        UserPreferencesRepository(context.applicationContext)
+    }
+    val favoriteRepository = remember {
+        FavoriteRepository(
+            DatabaseProvider.getDatabase(context).favoriteStudentDao()
+        )
+    }
+
     val navController = rememberNavController()
 
     NavHost(
@@ -38,7 +53,7 @@ fun NavigationLabApp() {
     ) {
         composable(Routes.HOME) {
             val homeViewModel: HomeViewModel = viewModel(
-                factory = HomeViewModel.factory(repository)
+                factory = HomeViewModel.factory(repository, preferencesRepository)
             )
 
             val uiState by homeViewModel.uiState.collectAsStateWithLifecycle()
@@ -73,7 +88,7 @@ fun NavigationLabApp() {
             val studentId = backStackEntry.arguments?.getInt("studentId") ?: -1
 
             val viewModel: DetailViewModel = viewModel(
-                factory = DetailViewModel.factory(repository)
+                factory = DetailViewModel.factory(repository, favoriteRepository)
             )
 
             val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -84,6 +99,7 @@ fun NavigationLabApp() {
 
             DetailScreen(
                 uiState = uiState,
+                onToggleFavorite = viewModel::toggleFavorite,
                 onBack = { navController.popBackStack() }
             )
         }
