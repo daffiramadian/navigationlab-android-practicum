@@ -20,9 +20,11 @@ import com.example.praktikum5_navigationcompose_245150200111040.data.remote.Stud
 import com.example.praktikum5_navigationcompose_245150200111040.data.repository.DefaultStudentRepository
 import com.example.praktikum5_navigationcompose_245150200111040.data.repository.FavoriteRepository
 import com.example.praktikum5_navigationcompose_245150200111040.ui.detail.DetailViewModel
+import com.example.praktikum5_navigationcompose_245150200111040.ui.favorites.FavoritesViewModel
 import com.example.praktikum5_navigationcompose_245150200111040.ui.home.HomeViewModel
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.AboutScreen
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.DetailScreen
+import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.FavoritesScreen
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.HomeScreen
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.ProfileScreen
 
@@ -72,6 +74,9 @@ fun NavigationLabApp() {
                 onOpenAbout = {
                     navController.navigate(Routes.ABOUT)
                 },
+                onOpenFavorites = {
+                    navController.navigate(Routes.FAVORITES)
+                },
                 onRetry = homeViewModel::retry,
                 onRefresh = homeViewModel::refresh
             )
@@ -100,6 +105,22 @@ fun NavigationLabApp() {
             DetailScreen(
                 uiState = uiState,
                 onToggleFavorite = viewModel::toggleFavorite,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.FAVORITES) {
+            val favoritesViewModel: FavoritesViewModel = viewModel(
+                factory = FavoritesViewModel.factory(favoriteRepository, preferencesRepository)
+            )
+            val favoritesUiState by favoritesViewModel.uiState.collectAsStateWithLifecycle()
+
+            FavoritesScreen(
+                uiState = favoritesUiState,
+                onOpenStudent = { id ->
+                    navController.navigate(Routes.detail(id))
+                },
+                onToggleSort = favoritesViewModel::toggleSortAscending,
                 onBack = { navController.popBackStack() }
             )
         }

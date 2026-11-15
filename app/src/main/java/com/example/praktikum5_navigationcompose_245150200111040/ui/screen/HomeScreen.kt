@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
@@ -27,7 +28,8 @@ fun HomeScreen(
     onOpenProfile: () -> Unit,
     onOpenAbout: () -> Unit,
     onRetry: () -> Unit,
-    onRefresh: () -> Unit
+    onRefresh: () -> Unit,
+    onOpenFavorites: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -50,6 +52,9 @@ fun HomeScreen(
                 ) {
                     IconButton(onClick = { /* Already Home */ }) {
                         Icon(Icons.Default.Home, contentDescription = "Home")
+                    }
+                    IconButton(onClick = onOpenFavorites) {
+                        Icon(Icons.Default.Favorite, contentDescription = "Favorit")
                     }
                     IconButton(onClick = onOpenProfile) {
                         Icon(Icons.Default.AccountCircle, contentDescription = "Profile")

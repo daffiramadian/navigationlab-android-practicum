@@ -4,6 +4,7 @@ import com.example.praktikum5_navigationcompose_245150200111040.data.local.Favor
 import com.example.praktikum5_navigationcompose_245150200111040.data.local.FavoriteStudentEntity
 import com.example.praktikum5_navigationcompose_245150200111040.data.model.Student
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 class FavoriteRepository(
     private val dao: FavoriteStudentDao
@@ -13,6 +14,18 @@ class FavoriteRepository(
 
     fun observeFavorites(): Flow<List<FavoriteStudentEntity>> =
         dao.observeFavorites()
+
+    fun observeFavoriteStudents(): Flow<List<Student>> =
+        dao.observeFavorites().map { entities ->
+            entities.map { entity ->
+                Student(
+                    id = entity.id,
+                    name = "${entity.firstName} ${entity.lastName}".trim(),
+                    email = entity.email,
+                    university = ""
+                )
+            }
+        }
 
     suspend fun add(student: Student) {
         dao.insert(
