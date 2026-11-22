@@ -43,7 +43,9 @@ class DefaultLocationRepository(
             DeviceLocation(
                 latitude = location.latitude,
                 longitude = location.longitude,
-                accuracy = location.accuracy
+                accuracy = location.accuracy,
+                isPrecise = fineGranted,
+                updatedAtMillis = System.currentTimeMillis()
             )
         }.onFailure {
             if (it is CancellationException) throw it

@@ -17,6 +17,8 @@ class LocationViewModel(
     val uiState: StateFlow<LocationUiState> = _uiState.asStateFlow()
 
     fun refreshLocation() {
+        if (_uiState.value is LocationUiState.Loading) return
+
         viewModelScope.launch {
             _uiState.value = LocationUiState.Loading
             _uiState.value = repository.getCurrentLocation()
@@ -24,6 +26,16 @@ class LocationViewModel(
                     onSuccess = { LocationUiState.Success(it) },
                     onFailure = { LocationUiState.Error(it.message ?: "Gagal mengambil lokasi") }
                 )
+        }
+    }
+
+    fun onPermissionDenied(permanentlyDenied: Boolean = false) {
+        _uiState.value = LocationUiState.PermissionDenied(permanentlyDenied)
+    }
+
+    fun clearPermissionDenied() {
+        if (_uiState.value is LocationUiState.PermissionDenied) {
+            _uiState.value = LocationUiState.Idle
         }
     }
 

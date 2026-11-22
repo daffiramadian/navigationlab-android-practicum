@@ -162,6 +162,8 @@ fun NavigationLabApp() {
             LocationScreen(
                 uiState = locationUiState,
                 onRequestLocation = locationViewModel::refreshLocation,
+                onPermissionDenied = locationViewModel::onPermissionDenied,
+                onPermissionRestored = locationViewModel::clearPermissionDenied,
                 onBack = { navController.popBackStack() }
             )
         }
