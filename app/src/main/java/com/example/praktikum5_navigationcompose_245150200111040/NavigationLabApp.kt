@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import android.content.Context
 import com.example.praktikum5_navigationcompose_245150200111040.data.local.DatabaseProvider
+import com.example.praktikum5_navigationcompose_245150200111040.data.location.DefaultLocationRepository
 import com.example.praktikum5_navigationcompose_245150200111040.data.preferences.UserPreferencesRepository
 import com.example.praktikum5_navigationcompose_245150200111040.data.remote.RetrofitClient
 import com.example.praktikum5_navigationcompose_245150200111040.data.remote.StudentRemoteDataSource
@@ -22,11 +23,14 @@ import com.example.praktikum5_navigationcompose_245150200111040.data.repository.
 import com.example.praktikum5_navigationcompose_245150200111040.ui.detail.DetailViewModel
 import com.example.praktikum5_navigationcompose_245150200111040.ui.favorites.FavoritesViewModel
 import com.example.praktikum5_navigationcompose_245150200111040.ui.home.HomeViewModel
+import com.example.praktikum5_navigationcompose_245150200111040.ui.location.LocationScreen
+import com.example.praktikum5_navigationcompose_245150200111040.ui.location.LocationViewModel
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.AboutScreen
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.DetailScreen
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.FavoritesScreen
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.HomeScreen
 import com.example.praktikum5_navigationcompose_245150200111040.ui.screen.ProfileScreen
+import com.google.android.gms.location.LocationServices
 
 @Composable
 fun NavigationLabApp() {
@@ -44,6 +48,15 @@ fun NavigationLabApp() {
     val favoriteRepository = remember {
         FavoriteRepository(
             DatabaseProvider.getDatabase(context).favoriteStudentDao()
+        )
+    }
+    val locationClient = remember {
+        LocationServices.getFusedLocationProviderClient(context.applicationContext)
+    }
+    val locationRepository = remember {
+        DefaultLocationRepository(
+            context = context.applicationContext,
+            client = locationClient
         )
     }
 
@@ -76,6 +89,9 @@ fun NavigationLabApp() {
                 },
                 onOpenFavorites = {
                     navController.navigate(Routes.FAVORITES)
+                },
+                onOpenLocation = {
+                    navController.navigate(Routes.LOCATION)
                 },
                 onRetry = homeViewModel::retry,
                 onRefresh = homeViewModel::refresh
@@ -133,6 +149,19 @@ fun NavigationLabApp() {
 
         composable(Routes.ABOUT) {
             AboutScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Routes.LOCATION) {
+            val locationViewModel: LocationViewModel = viewModel(
+                factory = LocationViewModel.factory(locationRepository)
+            )
+            val locationUiState by locationViewModel.uiState.collectAsStateWithLifecycle()
+
+            LocationScreen(
+                uiState = locationUiState,
+                onRequestLocation = locationViewModel::refreshLocation,
                 onBack = { navController.popBackStack() }
             )
         }

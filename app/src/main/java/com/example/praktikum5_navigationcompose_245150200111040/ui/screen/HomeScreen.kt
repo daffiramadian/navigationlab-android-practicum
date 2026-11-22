@@ -29,7 +29,8 @@ fun HomeScreen(
     onOpenAbout: () -> Unit,
     onRetry: () -> Unit,
     onRefresh: () -> Unit,
-    onOpenFavorites: () -> Unit = {}
+    onOpenFavorites: () -> Unit = {},
+    onOpenLocation: () -> Unit = {}
 ) {
     Scaffold(
         topBar = {
@@ -93,6 +94,15 @@ fun HomeScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Refresh")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = onOpenLocation,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Buka Lokasi")
             }
 
             Spacer(modifier = Modifier.height(16.dp))
