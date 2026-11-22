@@ -1,8 +1,8 @@
-# NavigationLab: Navigation, Architecture, REST API, Coroutines & Flow, DataStore & Room
+# NavigationLab: Navigation, Architecture, REST API, Coroutines & Flow, DataStore, Room & Location
 
 Repository ini berisi proyek praktikum mata kuliah **Pemrograman Aplikasi Perangkat Bergerak (CIF62041)**, Fakultas Ilmu Komputer, Universitas Brawijaya.
 
-NavigationLab dikembangkan bertahap melalui Modul Praktikum 05-09: navigasi, arsitektur berlapis, REST API, Kotlin Coroutines dan Flow, serta penyimpanan data lokal dengan DataStore dan Room.
+NavigationLab dikembangkan bertahap melalui Modul Praktikum 05-10: navigasi, arsitektur berlapis, REST API, Kotlin Coroutines dan Flow, penyimpanan data lokal (DataStore & Room), serta Location Services dengan runtime permission.
 
 ## Modul Praktikum
 
@@ -63,6 +63,14 @@ Repository
 | Preferences DataStore | `lastSearchQuery`, `sortAscending` | Data kecil berbentuk key-value |
 | Room | Mahasiswa favorit | Data terstruktur, perlu query dan observasi perubahan |
 
+### Modul 10 - Location Services dan Permission
+Menambahkan fitur foreground location one-shot tanpa background location, continuous tracking, maupun Maps API.
+
+- **Foreground Runtime Permission**: `ACCESS_COARSE_LOCATION` dan `ACCESS_FINE_LOCATION` diminta lewat `ActivityResultContracts.RequestMultiplePermissions` dan diperbarui saat hasil dialog maupun `ON_RESUME`.
+- **Location Repository**: `DefaultLocationRepository` memvalidasi izin aktual, memilih priority (`PRIORITY_HIGH_ACCURACY` vs `PRIORITY_BALANCED_POWER_ACCURACY`), memanggil `FusedLocationProviderClient.getCurrentLocation(...).await()`, dan melempar ulang `CancellationException`.
+- **ViewModel & StateFlow**: `LocationViewModel` mengelola `LocationUiState` (`Idle`, `Loading`, `Success`, `PermissionDenied`, `Error`) dengan guard saat `Loading` untuk mencegah request ganda.
+- **UI Lokasi**: `LocationScreen` menampilkan label akses (`Precise`/`Approximate`), koordinat, accuracy (meter), waktu pembaruan (`HH:mm:ss`), tombol `Perbarui Lokasi`, `Minta Izin Lagi`, serta `Buka Pengaturan` untuk penolakan permanen.
+
 ## Fitur Aplikasi
 
 - Daftar mahasiswa dari REST API dan detail berdasarkan ID.
@@ -72,11 +80,16 @@ Repository
 - Tombol Simpan/Hapus Favorit pada Detail.
 - Halaman Favorit yang reaktif dan dapat diurutkan.
 - Data favorit dan preferensi tetap ada setelah aplikasi direstart.
+- Halaman Lokasi untuk membaca koordinat terkini secara one-shot beserta status `Precise`/`Approximate`, accuracy, waktu pembaruan, dan penanganan izin ditolak.
 
 ## Struktur Proyek
 
 ```text
 data/
+├── location/
+│   ├── DeviceLocation.kt
+│   ├── LocationRepository.kt
+│   └── DefaultLocationRepository.kt
 ├── model/
 │   └── Student.kt
 ├── preferences/
@@ -108,6 +121,10 @@ ui/
 ├── favorites/
 │   ├── FavoritesUiState.kt
 │   └── FavoritesViewModel.kt
+├── location/
+│   ├── LocationUiState.kt
+│   ├── LocationViewModel.kt
+│   └── LocationScreen.kt
 └── screen/
     ├── HomeScreen.kt
     ├── DetailScreen.kt
@@ -115,78 +132,6 @@ ui/
     ├── ProfileScreen.kt
     └── AboutScreen.kt
 ```
-
-## Implementasi Modul 09
-
-### 1. Preferences DataStore
-
-```kotlin
-internal val Context.userPreferencesDataStore by preferencesDataStore(
-    name = "user_preferences"
-)
-
-class UserPreferencesRepository(private val context: Context) {
-    private val lastSearchQueryKey = stringPreferencesKey("last_search_query")
-
-    val lastSearchQuery: Flow<String> =
-        context.userPreferencesDataStore.data.map { it[lastSearchQueryKey] ?: "" }
-
-    suspend fun saveLastSearchQuery(value: String) {
-        context.userPreferencesDataStore.edit { it[lastSearchQueryKey] = value }
-    }
-}
-```
-
-### 2. Room: Entity, DAO, Database
-
-```kotlin
-@Entity(tableName = "favorite_students")
-data class FavoriteStudentEntity(
-    @PrimaryKey val id: Int,
-    val firstName: String,
-    val lastName: String,
-    val email: String
-)
-
-@Dao
-interface FavoriteStudentDao {
-    @Query("SELECT * FROM favorite_students ORDER BY firstName ASC")
-    fun observeFavorites(): Flow<List<FavoriteStudentEntity>>
-
-    @Query("SELECT EXISTS(SELECT 1 FROM favorite_students WHERE id = :id)")
-    fun observeIsFavorite(id: Int): Flow<Boolean>
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(student: FavoriteStudentEntity)
-
-    @Query("DELETE FROM favorite_students WHERE id = :id")
-    suspend fun deleteById(id: Int)
-}
-```
-
-### 3. Status Favorit Reaktif
-
-`DetailViewModel` mengamati status favorit dari Room lewat Flow dan membatalkan job lama agar tidak ada collector ganda saat berpindah mahasiswa.
-
-```kotlin
-private var favoriteJob: Job? = null
-
-private fun observeFavorite(id: Int) {
-    favoriteJob?.cancel()
-    favoriteJob = viewModelScope.launch {
-        favoriteRepository.observeIsFavorite(id).collect { value ->
-            _uiState.update { it.copy(isFavorite = value) }
-        }
-    }
-}
-```
-
-### 4. Pengujian Persistensi
-
-- Ketik query, tunggu 0,5 detik, tutup aplikasi, buka kembali: query muncul lagi.
-- Simpan favorit, restart aplikasi: status favorit tetap tersimpan.
-- Database Inspector (App Inspection): tabel `favorite_students` dapat diamati.
-- Airplane mode: data Room tetap tersedia, request REST API dapat gagal.
 
 ## REST API
 
@@ -214,4 +159,5 @@ API yang digunakan adalah [DummyJSON](https://dummyjson.com/). Base URL: `https:
 | Asynchronous | Kotlin Coroutines, Flow / StateFlow |
 | HTTP Client | Retrofit + Gson |
 | Penyimpanan | Preferences DataStore, Room |
+| Lokasi & Permission | Fused Location Provider, Coroutines Play Services, Activity Result API |
 |
